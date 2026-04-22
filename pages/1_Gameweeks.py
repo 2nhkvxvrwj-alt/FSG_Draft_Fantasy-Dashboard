@@ -1,13 +1,13 @@
 import streamlit as st
 from data import load_data
+import pandas as pd
+import altair as alt
 
 # -----------------------
-# SAFETY
+# STATE
 # -----------------------
 if "league_id" not in st.session_state:
     st.session_state.league_id = 21020
-
-st.title("📅 Gameweeks")
 
 # -----------------------
 # LOAD DATA
@@ -15,106 +15,117 @@ st.title("📅 Gameweeks")
 df, _ = load_data(st.session_state.league_id)
 df = df.copy()
 
-# -----------------------
-# HELPER: SORT GWs PROPERLY
-# -----------------------
-def sort_gws(gw_list):
-    return sorted(gw_list, key=lambda x: int(x.replace("GW", "")))
+st.title("📊 Gameweeks")
 
 # -----------------------
-# GET ACTIVE GWs ONLY
+# IDENTIFY GW COLUMNS
 # -----------------------
 gw_cols = [c for c in df.columns if c.startswith("GW")]
-
-active_gws = [g for g in gw_cols if df[g].sum() > 0]
-active_gws = sort_gws(active_gws)
+gw_cols = sorted(gw_cols, key=lambda x: int(x.replace("GW", "")))
 
 # -----------------------
-# RANGE SELECTOR
+# GLOBAL RANGE STATE
 # -----------------------
-st.subheader("Gameweek Range")
+if "gw_range" not in st.session_state:
+    st.session_state.gw_range = (1, len(gw_cols))
+
+# -----------------------
+# CONTROLS (ALWAYS VISIBLE)
+# -----------------------
+st.markdown("### 🎚️ Controls")
 
 start, end = st.slider(
-    "Select Gameweek Range",
+    "Gameweek Range",
     1,
-    len(active_gws),
-    (1, len(active_gws))
+    len(gw_cols),
+    st.session_state.gw_range,
+    key="gw_slider"
 )
 
-selected_gws = active_gws[start - 1:end]
-selected_gws = sort_gws(selected_gws)
+# Persist state
+st.session_state.gw_range = (start, end)
+
+selected_gws = gw_cols[start - 1:end]
 
 # -----------------------
 # CALCULATE TOTAL
 # -----------------------
 df["Total"] = df[selected_gws].sum(axis=1)
 
-# Sort by selected total
+# Sort
 df = df.sort_values("Total", ascending=False).reset_index(drop=True)
 
-# Add Position column
+# Position column
 df.insert(0, "Position", range(1, len(df) + 1))
 
 # -----------------------
-# TABLE (MERGED + CLEAN)
+# TABLE
 # -----------------------
-st.subheader("📊 Gameweek Performance")
-
 display_cols = ["Position", "Team", "Manager", "Bacon", "Total"] + selected_gws
 display_df = df[display_cols].copy()
 
+# Bold total
 styled_df = display_df.style.set_properties(
     subset=["Total"],
     **{"font-weight": "bold"}
 )
 
-st.dataframe(
-    styled_df,
-    use_container_width=True,
-    hide_index=True
-)
-
-import pandas as pd
-import altair as alt
-
 # -----------------------
-# CHART (CUMULATIVE + CLEAN AXIS)
+# CHART (CUMULATIVE)
 # -----------------------
-st.subheader("📈 Trend")
+base_df = df.set_index("Team")[selected_gws]
 
-selected_gws_sorted = sort_gws(selected_gws)
-
-# Convert GW labels → numeric
-gw_numbers = [int(g.replace("GW", "")) for g in selected_gws_sorted]
-
-# Build base dataframe
-base_df = df.set_index("Team")[selected_gws_sorted]
-
-# 🔥 CUMULATIVE SUM (this fixes main requirement)
 cum_df = base_df.cumsum(axis=1)
 
-# Transpose for chart
-chart_df = cum_df.T
-chart_df["GW"] = gw_numbers
+chart_df = cum_df.T.reset_index()
+chart_df = chart_df.rename(columns={"index": "GW"})
 
-# Melt for Altair
-chart_df = chart_df.reset_index(drop=True).melt(
+chart_df["GW"] = chart_df["GW"].str.replace("GW", "").astype(int)
+
+chart_df = chart_df.melt(
     id_vars="GW",
     var_name="Team",
     value_name="Points"
 )
 
-# -----------------------
-# ALTAIR CHART
-# -----------------------
 chart = alt.Chart(chart_df).mark_line().encode(
-    x=alt.X(
-        "GW:O",
-        title="Gameweek",
-        axis=alt.Axis(labelExpr="'GW' + datum.label")
-    ),
+    x=alt.X("GW:O", title="Gameweek"),
     y=alt.Y("Points:Q", title="Cumulative Points"),
     color="Team:N"
 ).properties(height=400)
 
-st.altair_chart(chart, use_container_width=True)
+# -----------------------
+# VIEW MODE
+# -----------------------
+st.markdown("### 🔍 View Mode")
+
+focus = st.toggle("Enable Focus Mode (expand view)")
+
+# -----------------------
+# DEFAULT (STACKED — MOBILE FRIENDLY)
+# -----------------------
+if not focus:
+    st.subheader("📊 Table")
+    st.dataframe(
+        styled_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.subheader("📈 Chart")
+    st.altair_chart(chart, use_container_width=True)
+
+# -----------------------
+# FOCUS MODE (FULL VIEW WITH CONTROLS)
+# -----------------------
+else:
+    view = st.radio("Select View", ["Table", "Chart"], horizontal=True)
+
+    if view == "Table":
+        st.dataframe(
+            styled_df,
+            use_container_width=True,
+            hide_index=True
+        )
+    else:
+        st.altair_chart(chart, use_container_width=True)

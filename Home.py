@@ -137,10 +137,15 @@ month_cols = [c for c in dfm.columns if c != "Bacon"]
 
 # ---- find latest month with data
 current_month = None
+
 for m in reversed(month_cols):
     if dfm[m].sum() > 0:
         current_month = m
         break
+
+# fallback if no data
+if current_month is None and month_cols:
+    current_month = month_cols[-1]
 
 bacon_month = dfm.set_index("Bacon")[current_month].sort_values()
 
@@ -170,7 +175,12 @@ st.markdown(f"<span style='color:red'>↓ {int(gap2_s)} pts from {third_s}</span
 
 # ---- Bacon table (monthly + total)
 table = dfm.copy()
+
+# Create Total FIRST
 table["Total"] = table[month_cols].sum(axis=1)
+
+# THEN select columns
+table = table[["Bacon", current_month, "Total"]]
 
 # 🔥 SORT DESCENDING
 table = table.sort_values("Total", ascending=False).reset_index(drop=True)
@@ -185,7 +195,7 @@ st.subheader("🏆 Teams")
 df["Position"] = range(1, len(df) + 1)
 
 st.dataframe(
-    df[["Position", "Team", "Manager", "Bacon", "Total"]],
+    df[["Position", "Team", "Manager", "Total"]],
     use_container_width=False,
     hide_index=True
 )

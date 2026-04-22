@@ -9,36 +9,13 @@ import altair as alt
 if "league_id" not in st.session_state:
     st.session_state.league_id = 21020
 
-st.title("📊 Monthly")
+st.title("🥓 Bacon League")
 
 # -----------------------
 # LOAD DATA
 # -----------------------
 _, dfm = load_data(st.session_state.league_id)
 dfm = dfm.copy()
-
-# -----------------------
-# COLLAPSE TO BACON TEAMS
-# -----------------------
-# Identify month columns safely
-def is_month(col):
-    try:
-        pd.to_datetime(col, format="%b %Y")
-        return True
-    except:
-        return False
-
-month_cols = [c for c in dfm.columns if is_month(c)]
-
-# 🔥 GROUP BY BACON TEAM
-dfm = dfm.groupby("Bacon")[month_cols].sum().reset_index()
-
-# -----------------------
-# HELPER: SORT MONTHS PROPERLY
-# -----------------------
-def sort_months(month_list):
-    # expects labels like "Jan 2026"
-    return sorted(month_list, key=lambda x: pd.to_datetime(x, format="%b %Y"))
 
 # -----------------------
 # IDENTIFY MONTH COLUMNS
@@ -51,19 +28,41 @@ def is_month(col):
         return False
 
 month_cols = [c for c in dfm.columns if is_month(c)]
+
+# -----------------------
+# COLLAPSE TO BACON TEAMS
+# -----------------------
+dfm = dfm.groupby("Bacon")[month_cols].sum().reset_index()
+
+# -----------------------
+# SORT MONTHS
+# -----------------------
+def sort_months(month_list):
+    return sorted(month_list, key=lambda x: pd.to_datetime(x, format="%b %Y"))
+
 month_cols = sort_months(month_cols)
 
 # -----------------------
-# RANGE SELECTOR
+# GLOBAL RANGE STATE
 # -----------------------
-st.subheader("Month Range")
+if "bacon_month_range" not in st.session_state:
+    st.session_state.bacon_month_range = (1, len(month_cols))
+
+# -----------------------
+# CONTROLS
+# -----------------------
+st.markdown("### 🎚️ Controls")
 
 start, end = st.slider(
     "Select Month Range",
     1,
     len(month_cols),
-    (1, len(month_cols))
+    st.session_state.bacon_month_range,
+    key="bacon_month_slider"
 )
+
+# Persist
+st.session_state.bacon_month_range = (start, end)
 
 selected_months = month_cols[start - 1:end]
 selected_months = sort_months(selected_months)
@@ -73,44 +72,31 @@ selected_months = sort_months(selected_months)
 # -----------------------
 dfm["Total"] = dfm[selected_months].sum(axis=1)
 
-# Sort by selected total
+# Sort
 dfm = dfm.sort_values("Total", ascending=False).reset_index(drop=True)
 
-# Position column
+# Position
 dfm.insert(0, "Position", range(1, len(dfm) + 1))
 
 # -----------------------
-# TABLE (MATCHES GAMEWEEKS)
+# TABLE
 # -----------------------
-st.subheader("📊 Monthly Performance")
+st.subheader("📊 Bacon Monthly Performance")
 
 display_cols = ["Position", "Bacon", "Total"] + selected_months
 display_df = dfm[display_cols].copy()
 
-# Bold Total
 styled_df = display_df.style.set_properties(
     subset=["Total"],
     **{"font-weight": "bold"}
 )
 
-st.dataframe(
-    styled_df,
-    use_container_width=True,
-    hide_index=True
-)
-
 # -----------------------
 # CHART (CUMULATIVE)
 # -----------------------
-st.subheader("📈 Trend")
-
-# Base data
 base_df = dfm.set_index("Bacon")[selected_months]
-
-# Cumulative
 cum_df = base_df.cumsum(axis=1)
 
-# Prepare for Altair
 chart_df = cum_df.T.reset_index()
 chart_df = chart_df.rename(columns={"index": "Month"})
 
@@ -120,17 +106,47 @@ chart_df = chart_df.melt(
     value_name="Points"
 )
 
-# -----------------------
-# ALTAIR CHART
-# -----------------------
 chart = alt.Chart(chart_df).mark_line().encode(
     x=alt.X(
-    "Month:O",
-    sort=selected_months,   # 🔥 THIS FIXES ORDER
-    title="Month"
-),
+        "Month:O",
+        sort=selected_months,
+        title="Month"
+    ),
     y=alt.Y("Points:Q", title="Cumulative Points"),
     color="Bacon:N"
 ).properties(height=400)
 
-st.altair_chart(chart, use_container_width=True)
+# -----------------------
+# VIEW MODE
+# -----------------------
+st.markdown("### 🔍 View Mode")
+
+focus = st.toggle("Enable Focus Mode (expand view)")
+
+# -----------------------
+# DEFAULT (STACKED)
+# -----------------------
+if not focus:
+    st.dataframe(
+        styled_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    st.subheader("📈 Trend")
+    st.altair_chart(chart, use_container_width=True)
+
+# -----------------------
+# FOCUS MODE
+# -----------------------
+else:
+    view = st.radio("Select View", ["Table", "Chart"], horizontal=True)
+
+    if view == "Table":
+        st.dataframe(
+            styled_df,
+            use_container_width=True,
+            hide_index=True
+        )
+    else:
+        st.altair_chart(chart, use_container_width=True)
