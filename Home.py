@@ -98,6 +98,9 @@ def load_data(league_id):
             "Bacon": bacon
         }
 
+        for g in sorted(gw.keys()):
+            row[f"GW{g}"] = gw.get(g, 0)
+
         row["Total"] = sum(gw.values())
         rows.append(row)
 
@@ -105,7 +108,7 @@ def load_data(league_id):
             monthly.setdefault(mm, {}).setdefault(bacon, 0)
             monthly[mm][bacon] += val
 
-    df = pd.DataFrame(rows).sort_values("Total", ascending=False).reset_index(drop=True)
+    df = pd.DataFrame(rows).fillna(0).sort_values("Total", ascending=False).reset_index(drop=True)
 
     # ---- Build monthly DF
     months_sorted = sorted(all_months)
@@ -119,9 +122,16 @@ def load_data(league_id):
 
     dfm = pd.DataFrame(data)
 
-    return df, dfm
+    return df, dfm, gw_to_month
 
-df, dfm = load_data(LEAGUE_ID)
+try:
+    df, dfm, gw_to_month = load_data(LEAGUE_ID)
+except Exception as e:
+    st.write(f"Error in load_data: {e}")
+    import traceback
+    st.write(traceback.format_exc())
+    st.stop()
+
 
 # =====================================================
 # 🐷 HEADER
@@ -192,10 +202,40 @@ st.dataframe(table, use_container_width=False, hide_index=True)
 # =====================================================
 st.subheader("🏆 Teams")
 
+gw_cols = [c for c in df.columns if c.startswith("GW")]
+sorted_gw_cols = sorted(gw_cols, key=lambda x: int(x.replace("GW", "")))
+
+last_week = None
+for col in reversed(sorted_gw_cols):
+    if df[col].sum() > 0:
+        last_week = col
+        break
+if last_week is None and sorted_gw_cols:
+    last_week = sorted_gw_cols[-1]
+
+if last_week:
+    df["Weekly"] = df[last_week]
+else:
+    df["Weekly"] = 0
+
+monthly_gw_cols = []
+if current_month is not None:
+    current_month_period = pd.to_datetime(current_month, format="%b %Y").to_period("M")
+    monthly_gw_cols = [
+        c for c in sorted_gw_cols
+        if gw_to_month.get(int(c.replace("GW", ""))) == current_month_period
+    ]
+
+if monthly_gw_cols:
+    df["Monthly"] = df[monthly_gw_cols].sum(axis=1)
+else:
+    df["Monthly"] = 0
+
+# Keep ordering by Total descending by default
 df["Position"] = range(1, len(df) + 1)
 
 st.dataframe(
-    df[["Position", "Team", "Manager", "Total"]],
+    df[["Position", "Team", "Manager", "Total", "Weekly", "Monthly"]],
     use_container_width=False,
     hide_index=True
 )
