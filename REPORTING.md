@@ -79,6 +79,8 @@ Before enabling live delivery:
 3. Leave `REPORT_MODE=test` for Gameweek 1.
 4. After approving that email, change `REPORT_MODE` to `live` for subsequent weeks.
 
+The manual workflow's **sample** checkbox uses labelled sample scores to test OpenAI and Gmail before a gameweek is complete. Samples cannot use live delivery and never modify `report-state.json`.
+
 ## Tests
 
 ```powershell

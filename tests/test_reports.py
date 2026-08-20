@@ -7,7 +7,7 @@ from reports.analysis import add_running_totals, analyse_month, analyse_week
 from reports.email_delivery import parse_recipients, send_report
 from reports.fpl_client import normalize_live_elements
 from reports.render import banter_instructions
-from reports.runner import read_state, write_state
+from reports.runner import read_state, validate_delivery, write_state
 
 
 class ReportAnalysisTests(unittest.TestCase):
@@ -82,6 +82,10 @@ class ReportAnalysisTests(unittest.TestCase):
             self.assertEqual(read_state(path), {"weekly": [], "monthly": []})
             write_state(path, {"weekly": ["1"], "monthly": []})
             self.assertEqual(read_state(path)["weekly"], ["1"])
+
+    def test_sample_live_delivery_is_not_a_valid_runner_combination(self):
+        with self.assertRaises(ValueError):
+            validate_delivery("live", True)
 
     @patch("reports.email_delivery.smtplib.SMTP_SSL")
     def test_email_uses_bcc_and_undisclosed_to_header(self, smtp_class):

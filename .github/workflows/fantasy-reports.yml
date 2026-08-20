@@ -18,6 +18,11 @@ on:
         default: "3"
         type: choice
         options: ["1", "2", "3", "4", "5"]
+      sample:
+        description: Use labelled sample data (test/dry-run only)
+        required: true
+        default: false
+        type: boolean
   schedule:
     - cron: "17,47 * * * *"
 
@@ -34,6 +39,7 @@ jobs:
     env:
       REPORT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || vars.REPORT_MODE || 'test' }}
       BANTER_LEVEL: ${{ github.event_name == 'workflow_dispatch' && inputs.banter_level || vars.BANTER_LEVEL || '3' }}
+      SAMPLE_REPORT: ${{ github.event_name == 'workflow_dispatch' && inputs.sample || 'false' }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
       GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
@@ -53,10 +59,13 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Generate or send reports
-        run: python -m reports.runner --league 9292 --mode "$REPORT_MODE" --banter-level "$BANTER_LEVEL"
+        run: |
+          sample_arg=""
+          if [ "$SAMPLE_REPORT" = "true" ]; then sample_arg="--sample"; fi
+          python -m reports.runner --league 9292 --mode "$REPORT_MODE" --banter-level "$BANTER_LEVEL" $sample_arg
 
       - name: Upload dry-run previews
-        if: env.REPORT_MODE == 'dry-run'
+        if: env.REPORT_MODE == 'dry-run' || env.SAMPLE_REPORT == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: fantasy-report-previews

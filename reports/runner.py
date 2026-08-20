@@ -6,6 +6,7 @@ from pathlib import Path
 from reports.analysis import add_running_totals, analyse_month, analyse_week
 from reports.email_delivery import parse_recipients, send_report
 from reports.fpl_client import FPLDraftClient, load_week
+from reports.generate import sample_week
 from reports.render import ai_narrative, render_html
 
 
@@ -30,9 +31,14 @@ def delivery_recipients(mode):
     return []
 
 
-def send_or_preview(report, output_dir, mode, banter_level, label):
+def validate_delivery(mode, sample):
+    if sample and mode == "live":
+        raise ValueError("Sample reports cannot use live delivery mode")
+
+
+def send_or_preview(report, output_dir, mode, banter_level, label, sample=False):
     narrative, used_ai = ai_narrative(report, banter_level=banter_level)
-    html_body = render_html(report, narrative)
+    html_body = render_html(report, narrative, sample=sample)
     html_path = output_dir / f"{label}.html"
     json_path = output_dir / f"{label}.json"
     html_path.write_text(html_body, encoding="utf-8")
@@ -40,7 +46,7 @@ def send_or_preview(report, output_dir, mode, banter_level, label):
 
     if mode != "dry-run":
         recipients = delivery_recipients(mode)
-        prefix = "[TEST] " if mode == "test" else ""
+        prefix = "[SAMPLE] " if sample else ("[TEST] " if mode == "test" else "")
         period = f"Gameweek {report['gameweek']}" if report["period"] == "weekly" else report["month"]
         send_report(
             f"{prefix}FSG Fantasy Draft — {period} Report",
@@ -66,12 +72,23 @@ def main():
     parser.add_argument("--banter-level", type=int, choices=range(1, 6), default=3)
     parser.add_argument("--state", type=Path, default=Path("report-state.json"))
     parser.add_argument("--output-dir", type=Path, default=Path("report-output"))
+    parser.add_argument("--sample", action="store_true", help="Send or render a labelled sample without updating state")
     args = parser.parse_args()
+    try:
+        validate_delivery(args.mode, args.sample)
+    except ValueError as error:
+        parser.error(str(error))
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     state = read_state(args.state)
     client = FPLDraftClient()
     events = client.bootstrap()["events"]
+    if args.sample:
+        entries = client.league(args.league)["league_entries"]
+        report, managers = sample_week(entries, 1)
+        report = add_running_totals(report, managers, events, 1)
+        send_or_preview(report, args.output_dir, args.mode, args.banter_level, "sample-gameweek-1", sample=True)
+        return
     completed = sorted(
         (event for event in events if event.get("finished") and event.get("data_checked")),
         key=lambda event: event["id"],
