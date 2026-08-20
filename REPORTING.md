@@ -66,7 +66,7 @@ In **Settings → Secrets and variables → Actions**, create these repository s
 Create these repository variables:
 
 - `REPORT_MODE` = `test`
-- `BANTER_LEVEL` = `3` (or the preferred level)
+- `BANTER_LEVEL` = `5` (maximum roast; reduce at any time)
 
 Enable Gmail two-step verification and create a dedicated app password. Never use or store the normal Gmail password.
 

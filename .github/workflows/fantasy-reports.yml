@@ -15,7 +15,7 @@ on:
       banter_level:
         description: Banter level (1 gentle, 5 full roast)
         required: true
-        default: "3"
+        default: "5"
         type: choice
         options: ["1", "2", "3", "4", "5"]
       sample:

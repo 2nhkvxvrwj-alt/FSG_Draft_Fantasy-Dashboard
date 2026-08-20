@@ -6,7 +6,7 @@ from unittest.mock import patch
 from reports.analysis import add_running_totals, analyse_month, analyse_week
 from reports.email_delivery import parse_recipients, send_report
 from reports.fpl_client import normalize_live_elements
-from reports.render import banter_instructions
+from reports.render import banter_instructions, render_html
 from reports.runner import read_state, validate_delivery, write_state
 
 
@@ -66,6 +66,11 @@ class ReportAnalysisTests(unittest.TestCase):
         self.assertEqual(report["overall_team_standings"][0]["group"], "Group B")
         self.assertEqual(report["dinner_buyer"]["group"], "Group A")
         self.assertIn("position_change", report["overall_individual_standings"][0])
+
+        rendered = render_html(report, "Opening joke.\n\nSecond paragraph.", sample=True)
+        self.assertIn("Matchday Gossip", rendered)
+        self.assertIn("Who's Buying Dinner?", rendered)
+        self.assertIn("NO REAL REPUTATIONS WERE HARMED", rendered)
 
     def test_banter_level_is_bounded_and_safety_rules_remain(self):
         self.assertIn("level 1/5", banter_instructions(0).lower())
