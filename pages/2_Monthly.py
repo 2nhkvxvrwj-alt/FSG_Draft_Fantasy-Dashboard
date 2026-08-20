@@ -7,7 +7,7 @@ import altair as alt
 # SAFETY
 # -----------------------
 if "league_id" not in st.session_state:
-    st.session_state.league_id = 21020
+    st.session_state.league_id = 9292
 
 st.title("📊 Monthly")
 
@@ -35,6 +35,10 @@ def is_month(col):
 
 month_cols = [c for c in dfm.columns if is_month(c)]
 month_cols = sort_months(month_cols)
+
+if not month_cols:
+    st.info("Monthly standings will appear after the first scored gameweek.")
+    st.stop()
 
 # -----------------------
 # GLOBAL RANGE STATE

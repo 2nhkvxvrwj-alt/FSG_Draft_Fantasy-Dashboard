@@ -7,7 +7,7 @@ import altair as alt
 # STATE
 # -----------------------
 if "league_id" not in st.session_state:
-    st.session_state.league_id = 21020
+    st.session_state.league_id = 9292
 
 # -----------------------
 # LOAD DATA
@@ -22,6 +22,10 @@ st.title("📊 Gameweeks")
 # -----------------------
 gw_cols = [c for c in df.columns if c.startswith("GW")]
 gw_cols = sorted(gw_cols, key=lambda x: int(x.replace("GW", "")))
+
+if not gw_cols:
+    st.info("Gameweek standings will appear after the first scored gameweek.")
+    st.stop()
 
 # -----------------------
 # GLOBAL RANGE STATE

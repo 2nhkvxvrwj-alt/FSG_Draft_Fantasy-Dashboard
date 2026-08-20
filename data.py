@@ -4,23 +4,25 @@ import streamlit as st
 
 
 TEAM_MAP = {
-    "Steve Dickenson": "Beast FC",
-    "Robert Gall": "Gall and the Gang",
-    "Alvar Chambers": "Beast FC",
-    "Guy Robinson": "Pogos Pilgrims",
-    "Emanuele Ciampa": "Gall and the Gang",
-    "Adrian Pogson": "Pogos Pilgrims",
-    "Luke Smith": "Beast FC",
-    "Dan Curtis": "Pogos Pilgrims",
-    "Jani H": "Gall and the Gang",
+    "Steve Dickenson": "Gall Stones",
+    "Robert Gall": "Gall Stones",
+    "Alvar Chambers": "The Beastie Boys",
+    "Guy Robinson": "The Beastie Boys",
+    "Emanuele Ciampa": "JaniDaniMani",
+    "Adrian Pogson": "Gall Stones",
+    "Luke Smith": "The Beastie Boys",
+    "Dan Curtis": "JaniDaniMani",
+    "Jani H": "JaniDaniMani",
 }
 
 @st.cache_data(ttl=300)
 def fetch(url):
     try:
-        return requests.get(url).json()
-    except:
-        return None
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as error:
+        raise RuntimeError(f"Could not load Fantasy Premier League data from {url}: {error}") from error
 
 
 @st.cache_data(ttl=300)

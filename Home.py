@@ -10,7 +10,7 @@ apply_style()
 # 🔒 SIDEBAR — LEAGUE CONTROL
 # =====================================================
 if "league_id" not in st.session_state:
-    st.session_state.league_id = 21020
+    st.session_state.league_id = 9292
 
 if "locked" not in st.session_state:
     st.session_state.locked = True
@@ -39,9 +39,11 @@ LEAGUE_ID = st.session_state.league_id
 @st.cache_data(ttl=300)
 def fetch(url):
     try:
-        return requests.get(url).json()
-    except:
-        return None
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as error:
+        raise RuntimeError(f"Could not load Fantasy Premier League data from {url}: {error}") from error
 
 @st.cache_data(ttl=300)
 def load_data(league_id):
@@ -58,15 +60,15 @@ def load_data(league_id):
 
     # ---- SAFE TEAM MAP (empty fallback)
     TEAM_MAP = {
-        "Steve Dickenson": "Beast FC",
-        "Robert Gall": "Gall and the Gang",
-        "Alvar Chambers": "Beast FC",
-        "Guy Robinson": "Pogos Pilgrims",
-        "Emanuele Ciampa": "Gall and the Gang",
-        "Adrian Pogson": "Pogos Pilgrims",
-        "Luke Smith": "Beast FC",
-        "Dan Curtis": "Pogos Pilgrims",
-        "Jani H": "Gall and the Gang",
+        "Steve Dickenson": "Gall Stones",
+        "Robert Gall": "Gall Stones",
+        "Alvar Chambers": "The Beastie Boys",
+        "Guy Robinson": "The Beastie Boys",
+        "Emanuele Ciampa": "JaniDaniMani",
+        "Adrian Pogson": "Gall Stones",
+        "Luke Smith": "The Beastie Boys",
+        "Dan Curtis": "JaniDaniMani",
+        "Jani H": "JaniDaniMani",
     }
 
     rows = []
@@ -157,17 +159,20 @@ for m in reversed(month_cols):
 if current_month is None and month_cols:
     current_month = month_cols[-1]
 
-bacon_month = dfm.set_index("Bacon")[current_month].sort_values()
+if current_month is None:
+    st.info("Monthly standings will appear after the first scored gameweek.")
+else:
+    bacon_month = dfm.set_index("Bacon")[current_month].sort_values()
 
-loser, second, third = bacon_month.index[:3]
+    loser, second, third = bacon_month.index[:3]
 
-gap1 = bacon_month[second] - bacon_month[loser]
-gap2 = bacon_month[third] - bacon_month[loser]
+    gap1 = bacon_month[second] - bacon_month[loser]
+    gap2 = bacon_month[third] - bacon_month[loser]
 
-st.markdown(f"<div style='font-size:20px; font-weight:600;'>🥪 Bacon Buyer ({current_month}) - {loser} </div>",
-    unsafe_allow_html=True)
-st.markdown(f"<span style='color:red'>↓ {int(gap1)} pts from {second}</span>", unsafe_allow_html=True)
-st.markdown(f"<span style='color:red'>↓ {int(gap2)} pts from {third}</span>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size:20px; font-weight:600;'>🥪 Bacon Buyer ({current_month}) - {loser} </div>",
+        unsafe_allow_html=True)
+    st.markdown(f"<span style='color:red'>↓ {int(gap1)} pts from {second}</span>", unsafe_allow_html=True)
+    st.markdown(f"<span style='color:red'>↓ {int(gap2)} pts from {third}</span>", unsafe_allow_html=True)
 # ---- Dinner (season)
 bacon_total = df.groupby("Bacon")["Total"].sum().sort_values()
 
@@ -184,13 +189,12 @@ st.markdown(f"<span style='color:red'>↓ {int(gap1_s)} pts from {second_s}</spa
 st.markdown(f"<span style='color:red'>↓ {int(gap2_s)} pts from {third_s}</span>", unsafe_allow_html=True)
 
 # ---- Bacon table (monthly + total)
-table = dfm.copy()
-
-# Create Total FIRST
-table["Total"] = table[month_cols].sum(axis=1)
-
-# THEN select columns
-table = table[["Bacon", current_month, "Total"]]
+if current_month is None:
+    table = df.groupby("Bacon", as_index=False)["Total"].sum()
+else:
+    table = dfm.copy()
+    table["Total"] = table[month_cols].sum(axis=1)
+    table = table[["Bacon", current_month, "Total"]]
 
 # 🔥 SORT DESCENDING
 table = table.sort_values("Total", ascending=False).reset_index(drop=True)

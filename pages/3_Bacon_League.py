@@ -7,7 +7,7 @@ import altair as alt
 # SAFETY
 # -----------------------
 if "league_id" not in st.session_state:
-    st.session_state.league_id = 21020
+    st.session_state.league_id = 9292
 
 st.title("🥓 Bacon League")
 
@@ -28,6 +28,10 @@ def is_month(col):
         return False
 
 month_cols = [c for c in dfm.columns if is_month(c)]
+
+if not month_cols:
+    st.info("Bacon League monthly standings will appear after the first scored gameweek.")
+    st.stop()
 
 # -----------------------
 # COLLAPSE TO BACON TEAMS
