@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .env
 .streamlit/secrets.toml
+report-preview*.html
+report-preview*.json
+streamlit*.log
