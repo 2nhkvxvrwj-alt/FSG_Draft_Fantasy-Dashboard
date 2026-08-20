@@ -10,11 +10,15 @@ class FPLDraftClient:
     def __init__(self, timeout=20):
         self.timeout = timeout
         self.session = requests.Session()
+        self.cache = {}
 
     def get(self, url):
+        if url in self.cache:
+            return self.cache[url]
         response = self.session.get(url, timeout=self.timeout)
         response.raise_for_status()
-        return response.json()
+        self.cache[url] = response.json()
+        return self.cache[url]
 
     def bootstrap(self):
         return self.get(f"{self.CLASSIC}/bootstrap-static/")

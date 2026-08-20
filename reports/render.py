@@ -5,6 +5,21 @@ import os
 import requests
 
 
+def banter_instructions(level):
+    level = max(1, min(5, int(level)))
+    descriptions = {
+        1: "Warm and mostly complimentary, with only very gentle teasing.",
+        2: "Light-hearted teasing with a few playful jokes.",
+        3: "Competitive pub-level banter with memorable but friendly jokes.",
+        4: "A sharp roast with sustained jokes, while remaining good-natured.",
+        5: "A full comedic roast: savage about fantasy decisions but never cruel or personal.",
+    }
+    return (
+        f"Banter level {level}/5. {descriptions[level]} "
+        "Joke only about fantasy football results and decisions. Do not target protected characteristics, appearance, health, family, employment, private life or other sensitive personal matters. Do not use threats, slurs or genuinely degrading language."
+    )
+
+
 def fallback_narrative(report):
     best = report.get("best_manager")
     worst = report.get("worst_manager")
@@ -24,7 +39,7 @@ def fallback_narrative(report):
     return narrative
 
 
-def ai_narrative(report, model="gpt-5.6-luna"):
+def ai_narrative(report, model="gpt-5.6-luna", banter_level=3):
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         return fallback_narrative(report), False
@@ -37,7 +52,7 @@ def ai_narrative(report, model="gpt-5.6-luna"):
             "input": [
                 {
                     "role": "developer",
-                    "content": "Write a concise, humorous and competitive fantasy football recap using only the supplied facts. Cover the period awards, the overall manager battle (leader, bottom manager, gaps and notable position changes), and the end-of-season dinner-buyer battle (including the current lowest Bacon group). Never invent scores, players, transfers or events. Keep teasing friendly and non-abusive.",
+                    "content": "Write a detailed, humorous and competitive fantasy football recap using only the supplied facts. Cover the period awards, the overall manager battle (leader, bottom manager, gaps and notable position changes), and the end-of-season dinner-buyer battle (including the current lowest Bacon group). Never invent scores, players, transfers or events. " + banter_instructions(banter_level),
                 },
                 {"role": "user", "content": json.dumps(report)},
             ],

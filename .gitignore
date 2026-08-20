@@ -6,3 +6,4 @@ __pycache__/
 report-preview*.html
 report-preview*.json
 streamlit*.log
+report-output/

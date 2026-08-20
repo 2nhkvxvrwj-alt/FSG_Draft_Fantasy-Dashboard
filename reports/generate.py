@@ -49,6 +49,7 @@ def main():
     parser.add_argument("--month", help="Calendar month in YYYY-MM format")
     parser.add_argument("--output", type=Path, default=Path("report-preview.html"))
     parser.add_argument("--sample", action="store_true", help="Use clearly labelled sample scores")
+    parser.add_argument("--banter-level", type=int, choices=range(1, 6), default=3)
     args = parser.parse_args()
 
     client = FPLDraftClient()
@@ -82,7 +83,7 @@ def main():
                 weeks.append(analyse_week(managers, players, transactions, event["id"]))
         report = analyse_month(weeks, args.month)
 
-    narrative, used_ai = ai_narrative(report)
+    narrative, used_ai = ai_narrative(report, banter_level=args.banter_level)
     args.output.write_text(render_html(report, narrative, sample=args.sample), encoding="utf-8")
     args.output.with_suffix(".json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"Wrote {args.output} ({'AI' if used_ai else 'fallback'} narrative)")

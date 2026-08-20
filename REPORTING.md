@@ -1,6 +1,6 @@
 # Automated reports
 
-The reporting package calculates facts deterministically from the public FPL Draft endpoints and can optionally use the OpenAI Responses API to write the recap. It does not send email yet.
+The reporting package calculates facts deterministically from the public FPL Draft endpoints, uses the OpenAI Responses API to write the recap and sends HTML email through Gmail.
 
 ## Award rules
 
@@ -32,6 +32,52 @@ Generate a sample monthly report:
 Remove `--sample` after the requested period is finished and data-checked. The live command deliberately refuses unfinished gameweeks.
 
 If `OPENAI_API_KEY` is present, the generator uses `gpt-5.6-luna` for the humorous recap. Without a key, it uses a deterministic fallback paragraph. API keys must be stored in GitHub Actions secrets and never committed.
+
+## Delivery modes
+
+- `dry-run` writes HTML/JSON previews and never sends or updates report state.
+- `test` sends only to `TEST_RECIPIENT` and records the report as sent.
+- `live` sends via BCC to `REPORT_RECIPIENTS` and records the report as sent.
+
+Scheduled GitHub Actions runs default to `test`. This guarantees the first completed gameweek goes only to the test recipient until the repository variable `REPORT_MODE` is deliberately changed to `live`.
+
+## Banter dial
+
+Set the repository variable `BANTER_LEVEL` from `1` to `5`, or select a level when manually running the workflow:
+
+1. Gentle
+2. Light teasing
+3. Competitive pub banter
+4. Sharp roast
+5. Full fantasy-football roast
+
+Every level remains limited to fantasy results and decisions. Personal, sensitive or protected characteristics are always excluded.
+
+## GitHub configuration
+
+In **Settings → Secrets and variables → Actions**, create these repository secrets:
+
+- `OPENAI_API_KEY`
+- `GMAIL_USERNAME`
+- `GMAIL_APP_PASSWORD`
+- `TEST_RECIPIENT`
+- `REPORT_RECIPIENTS` (comma-separated; not used while in test mode)
+
+Create these repository variables:
+
+- `REPORT_MODE` = `test`
+- `BANTER_LEVEL` = `3` (or the preferred level)
+
+Enable Gmail two-step verification and create a dedicated app password. Never use or store the normal Gmail password.
+
+The scheduled workflow checks at 17 and 47 minutes past each hour. It sends only after FPL marks a gameweek finished and data-checked. Sent periods are stored in `report-state.json`, preventing duplicates. The monthly report sends only when every gameweek whose deadline belongs to that month is complete.
+
+Before enabling live delivery:
+
+1. Run **Fantasy reports** manually in `dry-run` mode and inspect its artifact.
+2. Run it in `test` mode and inspect the email sent only to `TEST_RECIPIENT`.
+3. Leave `REPORT_MODE=test` for Gameweek 1.
+4. After approving that email, change `REPORT_MODE` to `live` for subsequent weeks.
 
 ## Tests
 
