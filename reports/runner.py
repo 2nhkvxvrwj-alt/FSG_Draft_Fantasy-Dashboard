@@ -73,6 +73,11 @@ def main():
     parser.add_argument("--state", type=Path, default=Path("report-state.json"))
     parser.add_argument("--output-dir", type=Path, default=Path("report-output"))
     parser.add_argument("--sample", action="store_true", help="Send or render a labelled sample without updating state")
+    parser.add_argument(
+        "--force-gameweek",
+        type=int,
+        help="Resend one completed gameweek even when it is already recorded as sent",
+    )
     args = parser.parse_args()
     try:
         validate_delivery(args.mode, args.sample)
@@ -97,16 +102,18 @@ def main():
     if not completed:
         print("No finished and data-checked gameweeks are available; nothing to send.")
         return
+    if args.force_gameweek and args.force_gameweek not in completed_ids:
+        parser.error(f"Gameweek {args.force_gameweek} is not finished and data-checked")
 
     weekly_cache = {}
     for event in completed:
         key = str(event["id"])
-        if key in state["weekly"]:
+        if key in state["weekly"] and event["id"] != args.force_gameweek:
             continue
         report = build_week(client, args.league, event, events)
         weekly_cache[event["id"]] = report
         send_or_preview(report, args.output_dir, args.mode, args.banter_level, f"gameweek-{event['id']}")
-        if args.mode != "dry-run":
+        if args.mode != "dry-run" and key not in state["weekly"]:
             state["weekly"].append(key)
             write_state(args.state, state)
 

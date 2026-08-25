@@ -23,6 +23,10 @@ on:
         required: true
         default: false
         type: boolean
+      force_gameweek:
+        description: Resend a completed gameweek number (leave blank normally)
+        required: false
+        type: string
   schedule:
     - cron: "17,47 * * * *"
 
@@ -40,6 +44,7 @@ jobs:
       REPORT_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || vars.REPORT_MODE || 'test' }}
       BANTER_LEVEL: ${{ github.event_name == 'workflow_dispatch' && inputs.banter_level || vars.BANTER_LEVEL || '3' }}
       SAMPLE_REPORT: ${{ github.event_name == 'workflow_dispatch' && inputs.sample || 'false' }}
+      FORCE_GAMEWEEK: ${{ github.event_name == 'workflow_dispatch' && inputs.force_gameweek || '' }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       GMAIL_USERNAME: ${{ secrets.GMAIL_USERNAME }}
       GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
@@ -62,7 +67,9 @@ jobs:
         run: |
           sample_arg=""
           if [ "$SAMPLE_REPORT" = "true" ]; then sample_arg="--sample"; fi
-          python -m reports.runner --league 9292 --mode "$REPORT_MODE" --banter-level "$BANTER_LEVEL" $sample_arg
+          force_arg=""
+          if [ -n "$FORCE_GAMEWEEK" ]; then force_arg="--force-gameweek $FORCE_GAMEWEEK"; fi
+          python -m reports.runner --league 9292 --mode "$REPORT_MODE" --banter-level "$BANTER_LEVEL" $sample_arg $force_arg
 
       - name: Upload dry-run previews
         if: env.REPORT_MODE == 'dry-run' || env.SAMPLE_REPORT == 'true'

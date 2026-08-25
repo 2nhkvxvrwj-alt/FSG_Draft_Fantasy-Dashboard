@@ -81,6 +81,8 @@ Before enabling live delivery:
 
 The manual workflow's **sample** checkbox uses labelled sample scores to test OpenAI and Gmail before a gameweek is complete. Samples cannot use live delivery and never modify `report-state.json`.
 
+For an intentional resend, manually run the workflow and enter the completed gameweek number in **force_gameweek**. This bypasses the sent-state check only for that run; the existing delivery history remains unchanged.
+
 ## Tests
 
 ```powershell
