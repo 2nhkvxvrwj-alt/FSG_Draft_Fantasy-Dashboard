@@ -71,6 +71,9 @@ class ReportAnalysisTests(unittest.TestCase):
         self.assertIn("Matchday Gossip", rendered)
         self.assertIn("Who's Buying Dinner?", rendered)
         self.assertIn("NO REAL REPUTATIONS WERE HARMED", rendered)
+        self.assertIn("bgcolor=\"#5b163f\"", rendered)
+        self.assertIn("<strong>Manager A</strong>", render_html(report, "**Manager A** scored 21.", sample=False))
+        self.assertNotIn("**", render_html(report, "**Manager A** scored **21**.", sample=False))
 
     def test_banter_level_is_bounded_and_safety_rules_remain(self):
         self.assertIn("level 1/5", banter_instructions(0).lower())
