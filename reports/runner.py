@@ -100,10 +100,10 @@ def main():
     )
     completed_ids = {event["id"] for event in completed}
     if not completed:
-        print("No finished gameweeks are available; nothing to send.")
+        print("No finished and data-checked gameweeks are available; nothing to send.")
         return
     if args.force_gameweek and args.force_gameweek not in completed_ids:
-        parser.error(f"Gameweek {args.force_gameweek} is not finished")
+        parser.error(f"Gameweek {args.force_gameweek} is not finished and data-checked")
 
     weekly_cache = {}
     for event in completed:

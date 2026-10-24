@@ -52,8 +52,9 @@ class ReportAnalysisTests(unittest.TestCase):
         self.assertEqual(result[0]["id"], 42)
         self.assertEqual(result[0]["stats"]["total_points"], 7)
 
-    def test_finished_event_is_ready_before_data_check(self):
-        self.assertTrue(event_ready({"finished": True, "data_checked": False}))
+    def test_event_is_ready_only_after_finish_and_data_check(self):
+        self.assertTrue(event_ready({"finished": True, "data_checked": True}))
+        self.assertFalse(event_ready({"finished": True, "data_checked": False}))
         self.assertFalse(event_ready({"finished": False, "data_checked": True}))
 
     def test_weekly_running_tables_use_requested_sort_orders(self):

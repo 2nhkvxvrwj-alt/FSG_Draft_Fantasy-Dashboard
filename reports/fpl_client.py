@@ -56,8 +56,8 @@ def normalize_live_elements(live):
 
 
 def event_ready(event):
-    """A finished gameweek is stable enough to report without waiting for data_checked."""
-    return bool(event.get("finished"))
+    """Report only after FPL has finished and rubber-stamped the gameweek data."""
+    return bool(event.get("finished") and event.get("data_checked"))
 
 
 def load_week(client, league_id, gameweek, allow_unfinished=False):
@@ -66,7 +66,7 @@ def load_week(client, league_id, gameweek, allow_unfinished=False):
     if not event:
         raise ValueError(f"Gameweek {gameweek} does not exist")
     if not allow_unfinished and not event_ready(event):
-        raise ValueError(f"Gameweek {gameweek} is not finished")
+        raise ValueError(f"Gameweek {gameweek} is not finished and data-checked")
 
     player_names = {
         player["id"]: f"{player['first_name']} {player['second_name']}".strip()
