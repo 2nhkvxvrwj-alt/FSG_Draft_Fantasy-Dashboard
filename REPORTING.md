@@ -29,7 +29,7 @@ Generate a sample monthly report:
 .\venv\Scripts\python.exe -m reports.generate --sample --period monthly --league 9292 --month 2026-08 --output report-preview-monthly.html
 ```
 
-Remove `--sample` after the requested period is finished and data-checked. The live command deliberately refuses unfinished gameweeks.
+Remove `--sample` after the requested period is finished. The live command deliberately refuses unfinished gameweeks.
 
 If `OPENAI_API_KEY` is present, the generator uses `gpt-5.6-luna` for the humorous recap. Without a key, it uses a deterministic fallback paragraph. API keys must be stored in GitHub Actions secrets and never committed.
 
@@ -70,7 +70,7 @@ Create these repository variables:
 
 Enable Gmail two-step verification and create a dedicated app password. Never use or store the normal Gmail password.
 
-The scheduled workflow checks at 17 and 47 minutes past each hour. It sends only after FPL marks a gameweek finished and data-checked. Sent periods are stored in `report-state.json`, preventing duplicates. The monthly report sends only when every gameweek whose deadline belongs to that month is complete.
+The scheduled workflow checks at 7, 22, 37 and 52 minutes past each hour. It sends as soon as FPL marks a gameweek finished, without waiting for the later `data_checked` flag. This improves delivery speed, although rare post-finish FPL score corrections will not be reflected in an email already sent. Sent periods are stored in `report-state.json`, preventing duplicates. The monthly report sends only when every gameweek whose deadline belongs to that month is complete.
 
 Before enabling live delivery:
 

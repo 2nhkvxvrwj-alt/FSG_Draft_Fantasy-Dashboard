@@ -5,7 +5,7 @@ from pathlib import Path
 
 from reports.analysis import add_running_totals, analyse_month, analyse_week
 from reports.email_delivery import parse_recipients, send_report
-from reports.fpl_client import FPLDraftClient, load_week
+from reports.fpl_client import FPLDraftClient, event_ready, load_week
 from reports.generate import sample_week
 from reports.render import ai_narrative, render_html
 
@@ -95,15 +95,15 @@ def main():
         send_or_preview(report, args.output_dir, args.mode, args.banter_level, "sample-gameweek-1", sample=True)
         return
     completed = sorted(
-        (event for event in events if event.get("finished") and event.get("data_checked")),
+        (event for event in events if event_ready(event)),
         key=lambda event: event["id"],
     )
     completed_ids = {event["id"] for event in completed}
     if not completed:
-        print("No finished and data-checked gameweeks are available; nothing to send.")
+        print("No finished gameweeks are available; nothing to send.")
         return
     if args.force_gameweek and args.force_gameweek not in completed_ids:
-        parser.error(f"Gameweek {args.force_gameweek} is not finished and data-checked")
+        parser.error(f"Gameweek {args.force_gameweek} is not finished")
 
     weekly_cache = {}
     for event in completed:

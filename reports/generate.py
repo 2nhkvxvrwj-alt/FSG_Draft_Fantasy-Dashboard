@@ -4,7 +4,7 @@ from pathlib import Path
 
 from data import TEAM_MAP
 from reports.analysis import add_running_totals, analyse_month, analyse_week
-from reports.fpl_client import FPLDraftClient, load_week
+from reports.fpl_client import FPLDraftClient, event_ready, load_week
 from reports.render import ai_narrative, render_html
 
 
@@ -68,7 +68,7 @@ def main():
         events = [
             event for event in bootstrap["events"]
             if event["deadline_time"].startswith(args.month)
-            and (args.sample or (event.get("finished") and event.get("data_checked")))
+            and (args.sample or event_ready(event))
         ]
         if not events:
             parser.error(f"No completed gameweeks found for {args.month}")

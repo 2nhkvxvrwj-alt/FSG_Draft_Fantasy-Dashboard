@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 from reports.analysis import add_running_totals, analyse_month, analyse_week
 from reports.email_delivery import parse_recipients, send_report
-from reports.fpl_client import normalize_live_elements
-from reports.render import banter_instructions, render_html
+from reports.fpl_client import event_ready, normalize_live_elements
+from reports.render import banter_instructions, narrative_instructions, render_html
 from reports.runner import read_state, validate_delivery, write_state
 
 
@@ -52,6 +52,10 @@ class ReportAnalysisTests(unittest.TestCase):
         self.assertEqual(result[0]["id"], 42)
         self.assertEqual(result[0]["stats"]["total_points"], 7)
 
+    def test_finished_event_is_ready_before_data_check(self):
+        self.assertTrue(event_ready({"finished": True, "data_checked": False}))
+        self.assertFalse(event_ready({"finished": False, "data_checked": True}))
+
     def test_weekly_running_tables_use_requested_sort_orders(self):
         self.managers[0]["history"] = [{"event": 1, "points": 5}, {"event": 2, "points": 21}]
         self.managers[1]["history"] = [{"event": 1, "points": 30}, {"event": 2, "points": 9}]
@@ -79,6 +83,10 @@ class ReportAnalysisTests(unittest.TestCase):
         self.assertIn("level 1/5", banter_instructions(0).lower())
         self.assertIn("level 5/5", banter_instructions(99).lower())
         self.assertIn("protected characteristics", banter_instructions(5))
+        instructions = narrative_instructions(5)
+        self.assertIn("Alvar Chambers", instructions)
+        self.assertIn("work-safe", instructions)
+        self.assertIn("fantasy score", instructions)
 
     def test_recipient_list_accepts_commas_semicolons_and_lines(self):
         result = parse_recipients("one@example.com, two@example.com;three@example.com\nfour@example.com")

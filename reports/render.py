@@ -21,6 +21,19 @@ def banter_instructions(level):
     )
 
 
+def narrative_instructions(banter_level):
+    return (
+        "Write a lively fantasy-football newsletter recap in 5-8 short paragraphs. "
+        "Open with a punchy headline-style line, use exact scores naturally, and make the jokes specific to the supplied team names, results, transfers and bench decisions. "
+        "Cover the period awards, overall manager battle (leader, bottom manager, gaps and notable position changes), and end-of-season dinner-buyer battle (including the current lowest Bacon group). "
+        "If Alvar Chambers appears anywhere in the supplied report, always give him a dedicated sentence or short paragraph with conspicuously sharper criticism than the other managers. "
+        "Make it pointed, funny and unambiguously work-safe, and ground it only in his supplied fantasy score, rank, gap, transfers, captaincy or bench decisions. "
+        "Vary the joke from report to report. Do not criticise his personality, competence at work or anything outside fantasy football, and do not invent a mistake when the data does not show one; "
+        "if he performed well, frame the praise as reluctant or mock-surprised instead. Avoid corporate or formal language. Never invent scores, players, transfers or events. "
+        + banter_instructions(banter_level)
+    )
+
+
 def fallback_narrative(report):
     best = report.get("best_manager")
     worst = report.get("worst_manager")
@@ -53,7 +66,7 @@ def ai_narrative(report, model="gpt-5.6-luna", banter_level=3):
             "input": [
                 {
                     "role": "developer",
-                    "content": "Write a lively fantasy-football newsletter recap in 5-8 short paragraphs. Open with a punchy headline-style line, use exact scores naturally, and make the jokes specific to the supplied team names, results, transfers and bench decisions. Cover the period awards, overall manager battle (leader, bottom manager, gaps and notable position changes), and end-of-season dinner-buyer battle (including the current lowest Bacon group). Avoid corporate or formal language. Never invent scores, players, transfers or events. " + banter_instructions(banter_level),
+                    "content": narrative_instructions(banter_level),
                 },
                 {"role": "user", "content": json.dumps(report)},
             ],

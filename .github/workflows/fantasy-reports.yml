@@ -28,7 +28,7 @@ on:
         required: false
         type: string
   schedule:
-    - cron: "17,47 * * * *"
+    - cron: "7,22,37,52 * * * *"
 
 concurrency:
   group: fantasy-reports
@@ -62,6 +62,9 @@ jobs:
           cache: pip
 
       - run: pip install -r requirements.txt
+
+      - name: Run report tests
+        run: python -m unittest discover -s tests -v
 
       - name: Generate or send reports
         run: |
