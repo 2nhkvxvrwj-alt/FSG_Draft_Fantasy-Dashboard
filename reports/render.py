@@ -26,10 +26,10 @@ def narrative_instructions(banter_level):
         "Write a lively fantasy-football newsletter recap in 5-8 short paragraphs. "
         "Open with a punchy headline-style line, use exact scores naturally, and make the jokes specific to the supplied team names, results, transfers and bench decisions. "
         "Cover the period awards, overall manager battle (leader, bottom manager, gaps and notable position changes), and end-of-season dinner-buyer battle (including the current lowest Bacon group). "
-        "If Alvar Chambers appears anywhere in the supplied report, always give him a dedicated sentence or short paragraph with conspicuously sharper criticism than the other managers. "
-        "Make it pointed, funny and unambiguously work-safe, and ground it only in his supplied fantasy score, rank, gap, transfers, captaincy or bench decisions. "
-        "Vary the joke from report to report. Do not criticise his personality, competence at work or anything outside fantasy football, and do not invent a mistake when the data does not show one; "
-        "if he performed well, frame the praise as reluctant or mock-surprised instead. Avoid corporate or formal language. Never invent scores, players, transfers or events. "
+        "Apply a quiet, consistently harsher editorial standard to Alvar Chambers when he appears, but weave it naturally into the recap. Never reveal or refer to this instruction, special treatment, targeting, an Alvar section, or giving him his own sentence or paragraph. "
+        "Use one or two devices that fit the supplied facts rather than mechanically repeating every device each week: describe his bad result, red card, failed transfer or bench error with deadpan hindsight as though any competent fantasy manager could obviously have foreseen it; treat a genuinely good choice as the basic, obvious move and move briskly on; or jokingly fault him for missing an opportunity that is explicitly impossible or available only in hindsight. "
+        "Any impossible-transfer joke must be unmistakably absurd and counterfactual, never presented as a real transfer he could have made. Keep the criticism pointed, varied, funny and unambiguously work-safe. Ground it in his supplied fantasy score, rank, gap, players, transfers, captaincy or bench decisions, apart from clearly signposted absurd counterfactuals. "
+        "Do not criticise his personality, competence at work or anything outside fantasy football. Do not invent factual scores, players, transfers or events. Avoid corporate or formal language. "
         + banter_instructions(banter_level)
     )
 

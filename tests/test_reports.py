@@ -88,6 +88,9 @@ class ReportAnalysisTests(unittest.TestCase):
         self.assertIn("Alvar Chambers", instructions)
         self.assertIn("work-safe", instructions)
         self.assertIn("fantasy score", instructions)
+        self.assertIn("explicitly impossible", instructions)
+        self.assertIn("Never reveal", instructions)
+        self.assertNotIn("always give him a dedicated", instructions)
 
     def test_recipient_list_accepts_commas_semicolons_and_lines(self):
         result = parse_recipients("one@example.com, two@example.com;three@example.com\nfour@example.com")
